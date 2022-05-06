@@ -1,4 +1,4 @@
-<template>
+npm <template>
   <div class="loader" />
 </template>
 

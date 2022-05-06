@@ -1,25 +1,20 @@
 {
-  "name": "ttweb",
+  "name": "xtxt",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy": "sh deploy.sh"
+    "deploy": "npm run build && firebase deploy"
   },
   "dependencies": {
+    "@vue/cli": "^5.0.4",
+    "@vue/cli-service": "^5.0.4",
     "core-js": "^3.6.5",
-    "vue": "^3.0.0"
-  },
-  "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "^3.1.1",
-    "@vue/cli-service": "^4.5.13",
-    "@vue/compiler-sfc": "^3.0.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^7.0.0"
+    "firebase": "^9.8.0",
+    "firebase-tools": "^10.8.0",
+    "vue": "^3.2.33"
   },
   "eslintConfig": {
     "root": true,
@@ -39,5 +34,9 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "devDependencies": {
+    "naive-ui": "^2.28.2",
+    "vfonts": "^0.0.3"
+  }
 }

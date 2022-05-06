@@ -1,24 +1,34 @@
 <template>
-  <div id="info">
-    <h1 >Info</h1>
-    <p>replace "regex" with "replacement"</p>
-    <p>grep "text"</p>
-    <p>sort</p>
-    <p>distinct</p>
-    <p>strip</p>
+  <div id="panel">
+    <InfoBox />
+    <TransformationsBox v-if="loggedIn" v-model:user="userRef"/>
+    <LoginBox v-else />
   </div>
 </template>
 
 
 <script>
-export default {
-  name: "SidePanel",
-};
+  import InfoBox from "./InfoBox"
+  import LoginBox from "./LoginBox"
+  import TransformationsBox from "./TransformationsBox"
+
+  export default {
+    name: "SidePanel",
+
+    props: {
+      loggedIn: null,
+      userRef: null
+    },
+
+    components: {
+      InfoBox,
+      LoginBox,
+      TransformationsBox
+    }, 
+
+  }
 </script>
 
 <style scoped>
 
-p {
-  text-align: left;
-}
 </style>

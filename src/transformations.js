@@ -40,15 +40,18 @@ class Text {
   }
 }
 
+class Flag {
+  constructor(label, active) {
+    this.label = label
+    this.active = active
+  }
+}
 /**
  * Basically a function with Text as input and Text as output,
  * can be chained to other Transformation(s).
  */
 class Transformation {
-  constructor(f, error=null) {
-    this._f = f
-    this.error = error
-  }
+  flags = []
 
   apply(text) {
     if (this.error != null) {
@@ -64,48 +67,76 @@ class Transformation {
     if (transformation.error != null) {
       return transformation
     }
-    return new Transformation(t => transformation.apply(this.apply(t)))
+    return new CustomTransformation(t => transformation.apply(this.apply(t)))
   }
 
-  static error(message) {
-    return new Transformation(null, message)
+}
+
+class InvalidTransformation extends Transformation {
+  constructor(error) {
+    super()
+    this.error = error
   }
 }
 
-function replace(code) {
-  let regex = /^\s*replace\s+"(.*?)"\s+with\s+"(.*?)"\s*/
-  let matches = code.match(regex)
-  let expression = new RegExp(matches[1], 'g')
-  let replacement = matches[2]
-  return new Transformation(text => Text.fromString(text.string().replace(expression, replacement.replace('\\n', '\n').replace('\\t', '\t'))))
+class CustomTransformation extends Transformation {
+  constructor(f) {
+    super()
+    this._f = f
+  }
 }
 
-function grep(code) {
-  let regex = /^\s*grep\s+"(.*?)"\s*/
-  let matches = code.match(regex)
-  let word = matches[1]
-  return new Transformation(text => Text.fromLines(text.lines().filter(line => line.includes(word))))
+class Grep extends Transformation {
+  constructor(code) {
+    super()
+    let regex = /^\s*grep\s+"(.*?)"\s*/
+    let matches = code.match(regex)
+    let word = matches[1]
+    this._f = text => Text.fromLines(text.lines().filter(line => line.includes(word)))
+    this.flags = [
+      new Flag('i', false),
+      new Flag('o', false),
+      new Flag('v', false)
+    ]
+  }
 }
 
-function sort() {
-  return new Transformation(text => Text.fromLines(text.lines().sort()))
+class Replace extends Transformation {
+  constructor(code) {
+    super()
+    const regex = /^\s*replace\s+"(.*?)"\s+with\s+"(.*?)"\s*/
+    const matches = code.match(regex)
+    const expression = new RegExp(matches[1], 'g')
+    const replacement = matches[2]
+    this._f = text => Text.fromString(text.string().replace(expression, replacement.replace('\\n', '\n').replace('\\t', '\t')))
+  }
 }
 
-function distinct() {
-  return new Transformation(text => Text.fromLines(Array.from(new Set(text.lines()))))
+class Sort extends Transformation {
+  constructor() {
+    super()
+    this._f = text => Text.fromLines(text.lines().sort())
+    this.flags = [
+      new Flag('r', false)
+    ]
+  }
 }
 
-function strip() {
-  return new Transformation(text => Text.fromLines(text.lines().filter(line => line.trim())))
+class Distinct extends Transformation {
+  constructor() {
+    super()
+    this._f = text => Text.fromLines(Array.from(new Set(text.lines())))
+  }
 }
 
-const transformations = [
-  {keyword: 'replace', f: replace },
-  {keyword: 'grep', f: grep },
-  {keyword: 'sort', f: sort },
-  {keyword: 'distinct', f: distinct },
-  {keyword: 'strip', f: strip }
-    /**
+class Strip extends Transformation {
+  constructor() {
+    super()
+    this._f = text => Text.fromLines(text.lines().filter(line => line.trim()))
+  }
+}
+
+  /**
    * join
    * split
    * prepend/append
@@ -115,26 +146,32 @@ const transformations = [
    * remove
    * cut
    */
-]
 
+  
 export default {
 
-  keywords: transformations.map(t => t.keyword),
+  transformations: [
+    { keyword: 'grep', transformation: code => new Grep(code) },
+    { keyword: 'replace', transformation: code => new Replace(code) },
+    { keyword: 'sort', transformation: code => new Sort(code) },
+    { keyword: 'distinct', transformation: code => new Distinct(code) },
+    { keyword: 'strip', transformation: code => new Strip(code) }
+  ],
 
   parseTransformation(code) {
 
     try {
       const keyword = code.match(/^\s*(\w+)\s*/)[1] // index 1 is first capture group
 
-      const t = transformations.find(t => t.keyword == keyword)
+      const t = this.transformations.find(t => t.keyword == keyword)
 
       if (t != null) {
-        return t.f(code)
+        return t.transformation(code)
       } else {
-        return Transformation.error(keyword + ' is not a keyword.')
+        return new InvalidTransformation(keyword + ' is not a valid keyword')
       }
-    } catch (error) {
-      return Transformation.error(code + ' is not a valid transformation\n' + error)
+    } catch (error) { // TODO custom error inside each transformation, with a better explanation of what is incorrect
+      return new InvalidTransformation(code + ' is not a valid transformation\n' + error)
     }
   },
 
