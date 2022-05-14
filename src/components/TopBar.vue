@@ -1,8 +1,9 @@
 <template>
-  <n-page-header id='asd' title='Extreme Text Tools' subtitle='work in progress'>
+  <n-page-header title='eXtreme TeXT tools' subtitle='work in progress'>
     <template #extra>
       <n-space justify="end">
-        <n-button  text v-if="loggedIn" @click="logOut">Sign Out</n-button>
+        <n-button text size="large" v-if="loggedIn" @click="emit('sign-out')">Sign Out</n-button>
+        <n-button text size="large" v-else @click="emit('sign-in')">Sign In</n-button>
       </n-space>
     </template>
   </n-page-header>
@@ -10,21 +11,14 @@
 
 
 <script setup>
-  import { getAuth, signOut } from "@firebase/auth";
-  import { defineProps } from "vue";
-
   defineProps({
     loggedIn: false
   })
-  
-  function logOut() {
-    signOut(getAuth()).then(() => {
-      // ok
-    }).catch((error) => {
-      console.log('error on logout ' + error)
-    });
-  }
 
+  const emit = defineEmits([
+    'sign-in', 'sign-out'
+  ])
+  
 </script>
 
 <style scoped>

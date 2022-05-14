@@ -1,16 +1,26 @@
 <template>
-  <div id="login" v-if="expand">
-    <div id="login-form" >
-      <input type="text" v-model="email" placeholder="Email" />
-      <input type="password" v-model="password" placeholder="Password" />
-      <n-button type="primary" v-on:click="login">Login</n-button>
-      <n-button type="primary" v-on:click="loginGoogle">Login with Google</n-button>
-      <!--n-button v-on:click="loginGitHub()">Login with GitHub</n-button-->
-      <n-button type="primary" v-on:click="signUp">Sign Up</n-button>
-    </div>
-    <div v-if="errorMessage"> {{ errorMessage }} </div>
-  </div>
-  <n-button v-else id="prompt" type="primary" @click="clickedSignIn"> Sign in to save your transformations! </n-button>
+  <n-modal >
+    <n-card title="Sign In" @close="onClose">
+      <n-form 
+      ref="formRef">
+        <n-form-item label="Email">
+          <n-input type="text" v-model="email" placeholder="Email" />
+        </n-form-item>
+        <n-form-item label="Password">
+          <n-input type="password" v-model="password" placeholder="Password" />
+        </n-form-item>
+        <n-space vertical>
+          <n-button strong secondary type="primary" v-on:click="login">Login</n-button>
+          <n-button strong primary color="#B22222" v-on:click="loginGoogle">Login with Google</n-button>
+        <!--n-button v-on:click="loginGitHub()">Login with GitHub</n-button-->
+          <n-button strong secondary v-on:click="signUp">Sign Up</n-button>
+            <n-alert v-if="errorMessage"
+            title="Error" 
+            type="error"> {{ errorMessage }} </n-alert>
+        </n-space>
+      </n-form>
+    </n-card>
+  </n-modal>
 </template>
 
 <script setup>
@@ -31,16 +41,14 @@
     }
   })
 
-  const expand = ref(false)
-
   const password = ref("")
   const email = ref("")
-  const loggedIn = ref(false)
   const errorMessage = ref("")
+  const show = ref(true)
 
-  function clickedSignIn() {
-    expand.value = true
-  }
+  const bodyStyle = ref({
+    width: "400px"
+  })
 
   function login() {
     errorMessage.value = null
@@ -105,8 +113,17 @@
     }
   }
 
+  function onClose() {
+    show.value = false
+  }
+
 </script>
 
 <style scoped>
-
+.n-card {
+  max-width: 400px;
+}
+.n-button {
+  width: stretch;
+}
 </style>

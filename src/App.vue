@@ -1,10 +1,10 @@
 <template>
   <n-config-provider 
-    :theme-overrides="{ common: { fontWeightStrong: '600' } }" >
+  :theme-overrides="{ common: { fontWeightStrong: '600' } }" >
     <n-notification-provider>
       <n-message-provider>
 
-        <Page/>
+        <Home/>
 
       </n-message-provider>
     </n-notification-provider>
@@ -14,7 +14,7 @@
 <script>
 import { NConfigProvider, NMessageProvider, NNotificationProvider } from 'naive-ui';
 import { darkTheme } from 'naive-ui'
-import Page from './components/Page.vue';
+import Home from './components/Home.vue';
 
 export default {
   name: 'App',
@@ -23,7 +23,7 @@ export default {
     NConfigProvider,
     NMessageProvider,
     NNotificationProvider,
-    Page
+    Home
   },
 
   setup() {

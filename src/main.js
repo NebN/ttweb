@@ -19,20 +19,18 @@ const firebaseConfig = {
     measurementId: "G-ZMKC4HMYH1"
 }
 
-const firebaseApp = initializeApp(firebaseConfig)
-const db = getFirestore()
-
-export { db }
+initializeApp(firebaseConfig)
+export const db = getFirestore()
 
 const app = createApp(App)
 app.use(naive)
 
 app.directive('focus', {
-    // When the bound element is mounted into the DOM
-    mounted(el) {
-        // Focus the element
-        el.focus()
-    }
+  // When the bound element is mounted into the DOM
+  mounted(el) {
+    // Focus the element
+    el.focus()
+  }
 })
 
 app.mount('#app')

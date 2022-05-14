@@ -1,34 +1,80 @@
-<template>
+  <template>
   <div id="panel">
-    <InfoBox />
-    <TransformationsBox v-if="loggedIn" v-model:user="userRef"/>
-    <LoginBox v-else />
+    <n-space justify="space-around" size="small">
+        <n-button @click="showDrawer=true">
+          <template #icon>
+            <Question20Filled />  
+          </template>
+        </n-button>
+        <!--n-switch v-model:value="active" size="medium">
+          <template #icon>
+            🤔
+          </template>
+        </n-switch-->
+    </n-space>
+    <Drawer v-model:show="showDrawer" />
+    <div>
+      <n-divider title-placement="left">
+      Saved Transformations
+      </n-divider>
+      <TransformationsBox 
+      @selected="onSelected" 
+      @save="onSave"
+      @delete="onDelete"
+      @edit="onEdit"
+      @add="onAdd"
+      :savedTransformationChains="savedTransformationChains"
+      v-if="loggedIn"/>
+      <div class="signInPrompt" v-else><a href="#" @click.prevent="emit('sign-in')">Sign In</a> to save your transformations!</div>
+    </div>
   </div>
 </template>
 
 
-<script>
-  import InfoBox from "./InfoBox"
-  import LoginBox from "./LoginBox"
-  import TransformationsBox from "./TransformationsBox"
+<script setup>
+  import { ref } from 'vue'
+  import Drawer from './Drawer.vue'
+  import TransformationsBox from './TransformationsBox.vue'
+  import { Question20Filled } from '@vicons/fluent'
+  import { RecordStop20Regular } from '@vicons/fluent'
 
-  export default {
-    name: "SidePanel",
+  const props = defineProps({
+    loggedIn: null,
+    savedTransformationChains: {
+      type: Array,
+      default: []
+    }
+  })
 
-    props: {
-      loggedIn: null,
-      userRef: null
-    },
+  const showDrawer = ref(false)
+  const active = ref(true)
 
-    components: {
-      InfoBox,
-      LoginBox,
-      TransformationsBox
-    }, 
+  const emit = defineEmits(['sign-in', 'selected', 'save', 'delete', 'edit', 'add'])
 
+  function onSelected(t) {
+    emit('selected', t)
   }
+
+  function onSave(t) {
+    emit('save', t)
+  }
+
+  function onDelete(t) {
+    emit('delete', t)
+  }
+
+  function onEdit(t, newName) {
+    emit('edit', t, newName)
+  }
+
+  function onAdd(t) {
+    emit('add', t)
+  }
+
 </script>
 
 <style scoped>
-
+.signInPrompt {
+  text-align: center;
+}
 </style>
