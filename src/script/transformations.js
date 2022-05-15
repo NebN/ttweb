@@ -62,6 +62,9 @@ class Flag {
 class TextTransformation {
   flags = []
 
+  // does not work when deployed to firebase, 'name' becomes something like 'x', 'w' or '_'
+  //name = this.constructor.name
+
   apply(text) {
     return this._f(text)
   }
@@ -84,6 +87,8 @@ class TextTransformation {
 }
 
 class InvalidTransformation extends TextTransformation {
+  name = 'InvalidTransformation'
+
   constructor(error) {
     super()
     this.error = error
@@ -107,6 +112,8 @@ class InvalidTransformation extends TextTransformation {
 }
 
 class TextTransformationChain extends TextTransformation {
+  name = 'TextTransformationChain'
+
   constructor(ts) {
     super()
     this._textTransformations = ts
@@ -136,6 +143,8 @@ class TextTransformationChain extends TextTransformation {
 }
 
 class Grep extends TextTransformation {
+  name = 'Grep'
+
   constructor(word) {
     super()
     this.word = word
@@ -148,11 +157,15 @@ class Grep extends TextTransformation {
 }
 
 class Replace extends TextTransformation {
+  name = 'Replace'
+
+
   constructor(expression, replacement) {
     super()
     this.expression = expression
+    const expressionRegex = new RegExp(expression, 'g')
     this.replacement = replacement
-    this._f = text => Text.fromString(text.string().replace(this.expression, this.replacement.replace('\\n', '\n').replace('\\t', '\t')))
+    this._f = text => Text.fromString(text.string().replace(expressionRegex, this.replacement.replace('\\n', '\n').replace('\\t', '\t')))
   }
 
   toString() {
@@ -161,6 +174,8 @@ class Replace extends TextTransformation {
 }
 
 class Sort extends TextTransformation {
+  name = 'Sort'
+
   constructor() {
     super()
     this._f = text => Text.fromLines(text.lines().sort())
@@ -172,6 +187,8 @@ class Sort extends TextTransformation {
 }
 
 class Distinct extends TextTransformation {
+  name = 'Distinct'
+
   constructor() {
     super()
     this._f = text => Text.fromLines(Array.from(new Set(text.lines())))
@@ -183,6 +200,8 @@ class Distinct extends TextTransformation {
 }
 
 class Strip extends TextTransformation {
+  name = 'Strip'
+
   constructor() {
     super()
     this._f = text => Text.fromLines(text.lines().filter(line => line.trim()))
@@ -218,8 +237,8 @@ export const transformations = [
     keyword: 'replace', parse: code => {
       const regex = /^\s*replace\s+"(.*?)"\s+with\s+"(.*?)"\s*/
       const matches = code.match(regex)
-      expression = new RegExp(matches[1], 'g')
-      replacement = matches[2]
+      const expression = matches[1]
+      const replacement = matches[2]
       return new Replace(expression, replacement) 
     }
   },
@@ -274,12 +293,10 @@ export function transform(transformation, input) {
 }
 
 export function serializeTransformation(transformation) {
-  if (transformation.constructor.name == 'TextTransformationChain') {
+  if (transformation.name == 'TextTransformationChain') {
     transformation._textTransformations.forEach(t => {
-      t['name'] = t.constructor.name      
     })
   } 
-  transformation['name'] = transformation.constructor.name
   const stringified = JSON.stringify(transformation)
   return stringified
 }
@@ -291,7 +308,7 @@ function deserializeParsed(parsed) {
     case 'Grep':
       return new Grep(parsed.word)
     case 'Replace':
-      return new Grep(parsed.expression, parsed.replacement)
+      return new Replace(parsed.expression, parsed.replacement)
     case 'Sort':
       return new Sort()
     case 'Distinct':

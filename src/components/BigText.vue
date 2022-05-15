@@ -1,32 +1,40 @@
 <template>
-  <div class="containerDiv">
-    <n-progress v-if="loading" type="circle" :percentage="percentage" />
-    <textarea v-else
-    v-model="textAreaValue"
-    ref="textAreaRef"
-    @input="onInput"
-    :class="{
-        bad: bad
-    }"
-    wrap="off"
-    autocomplete="off"
-    autocorrect="off" 
-    autocapitalize="off" 
-    spellcheck="false"/>
-  </div>
+    <!--n-progress v-if="loading" type="circle" :percentage="percentage" /-->
+    <n-spin :show="loading" size="large" >
+      <textarea 
+      v-model="textAreaValue"
+      :readonly="readonly"
+      ref="textAreaRef"
+      @input="onInput"
+      :class="{
+          bad: bad,
+          loading: loading
+      }"
+      wrap="off"
+      autocomplete="off"
+      autocorrect="off" 
+      autocapitalize="off" 
+      spellcheck="false"/>
+      <template #description>
+        {{ loadingDescription }}
+      </template>
+    </n-spin>
 </template>
 
 
 <script setup>
   import { ref, nextTick } from 'vue'
+  import { NSpin } from 'naive-ui'
 
   const props = defineProps({
     bad: false,
     loading: false,
-    percentage: 0
+    percentage: 0,
+    loadingDescription: '',
+    readonly: false,
+    maxChars: 0
   })
 
-  const maxChars = 750000
   const textAreaValue = ref('')
   const textAreaRef = ref()
 
@@ -64,7 +72,7 @@
     }
   }
 
-  const overflowableText = new OverflowableText(maxChars)
+  const overflowableText = new OverflowableText(props.maxChars)
 
   function onInput(e) {
     const cursorPosition = textAreaRef.value.selectionEnd
@@ -89,27 +97,33 @@
 </script>
 
 <style scoped>
-  .containerDiv {
-    display: inline-flex;
+  .n-spin-container {
+    display: grid;
+    grid-template-areas: "content";
   }
 
-  .n-progress {
-    margin: auto;
-    align-self: center;
+  .n-spin-container :deep(.n-spin-content) {
+    display: grid;
+    grid-area: "content";
+    grid-template-areas: "text";
   }
 
-  textarea {
+  .n-spin-container .n-spin-content textarea {
+    grid-area: "text";
     font-family: 'Fira Code';
     resize: none;
     overflow: auto;
     font-size:12px;
     outline: none;
-    width: stretch;
   }
 
   textarea.bad {
     border: solid #e63946;
     font-size:20px;
+  }
+
+  textarea.loading {
+    opacity: 0.3;
   }
 
 </style>

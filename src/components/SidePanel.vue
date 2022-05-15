@@ -13,20 +13,22 @@
         </n-switch-->
     </n-space>
     <Drawer v-model:show="showDrawer" />
-    <div>
-      <n-divider title-placement="left">
-      Saved Transformations
-      </n-divider>
-      <TransformationsBox 
-      @selected="onSelected" 
-      @save="onSave"
-      @delete="onDelete"
-      @edit="onEdit"
-      @add="onAdd"
-      :savedTransformationChains="savedTransformationChains"
-      v-if="loggedIn"/>
-      <div class="signInPrompt" v-else><a href="#" @click.prevent="emit('sign-in')">Sign In</a> to save your transformations!</div>
-    </div>
+      <n-spin :show="loading">
+        <div>
+          <n-divider title-placement="left">
+          Saved Transformations
+          </n-divider>
+          <div class="signInPrompt" v-if="!loggedIn"><a href="#" @click.prevent="emit('sign-in')">Sign In</a> to save your transformations!</div>
+          <TransformationsBox 
+          @selected="onSelected" 
+          @save="onSave"
+          @delete="onDelete"
+          @edit="onEdit"
+          @add="onAdd"
+          :savedTransformationChains="savedTransformationChains"
+          />
+      </div>
+    </n-spin>
   </div>
 </template>
 
@@ -40,9 +42,10 @@
 
   const props = defineProps({
     loggedIn: null,
+    loading: false,
     savedTransformationChains: {
       type: Array,
-      default: []
+      default: [],
     }
   })
 

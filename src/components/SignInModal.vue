@@ -1,6 +1,6 @@
 <template>
-  <n-modal >
-    <n-card title="Sign In" @close="onClose">
+  <n-modal :on-after-leave="onClose" >
+    <n-card title="Sign In">
       <n-form 
       ref="formRef">
         <n-form-item label="Email">
@@ -10,7 +10,7 @@
           <n-input type="password" v-model="password" placeholder="Password" />
         </n-form-item>
         <n-space vertical>
-          <n-button strong secondary type="primary" v-on:click="login">Login</n-button>
+          <n-button strong secondary type="primary" v-on:click="loginEmail">Login</n-button>
           <n-button strong primary color="#B22222" v-on:click="loginGoogle">Login with Google</n-button>
         <!--n-button v-on:click="loginGitHub()">Login with GitHub</n-button-->
           <n-button strong secondary v-on:click="signUp">Sign Up</n-button>
@@ -24,10 +24,9 @@
 </template>
 
 <script setup>
-  import { NButton } from 'naive-ui'
-  import { defineComponent } from 'vue'
   import { ref } from 'vue'
-  import { getAuth, 
+  import { auth } from '@/main.js'
+  import {
   signInWithEmailAndPassword, 
   getRedirectResult, 
   GoogleAuthProvider, 
@@ -35,11 +34,9 @@
   signInWithRedirect, 
   createUserWithEmailAndPassword} from 'firebase/auth'
 
-  defineComponent({
-    components: {
-      NButton
-    }
-  })
+  const emit = defineEmits(
+    ['login-started', 'login-complete']
+  )
 
   const password = ref("")
   const email = ref("")
@@ -50,9 +47,27 @@
     width: "400px"
   })
 
-  function login() {
+  function login(callback) {
+    emit('login-started')
+    callback().then(() =>{
+      emit('login-complete')
+    })
+  }
+
+  function loginEmail() {
+    login(mail)
+  }
+
+  function loginGoogle() {
+    login(google)
+  }
+
+  function loginGitHub() {
+    login(gitHub)
+  }
+
+  async function mail() {
     errorMessage.value = null
-    const auth = getAuth()
     signInWithEmailAndPassword(auth, email.value, password.value)
       .then((userCredential) => {
 
@@ -62,19 +77,19 @@
       });
   }
 
-  function loginGoogle() {
-    login3rdParty(new GoogleAuthProvider());
+  async function google() {
+    thirdParty(new GoogleAuthProvider())
   }
 
-  function loginGitHub() {
-    login3rdParty(new GithubAuthProvider())
+  async function gitHub() {
+    thirdParty(new GithubAuthProvider())
   }
 
-  async function login3rdParty(provider) {
+  async function thirdParty(provider) {
     errorMessage.value = null
-    const auth = getAuth()
     await signInWithRedirect(auth, provider)
     getRedirectResult(auth).then((result) => {
+      // OK
     }).catch((error) => {
         console.log('error on getRedirectResult ' + error)
         diplayError(error)
@@ -83,9 +98,9 @@
 
   function signUp() {
     errorMessage.value = null
-    const auth = getAuth()
     createUserWithEmailAndPassword(auth, email.value, password.value)
       .then((userCredential) => {
+        // OK
       }).catch((error) => {
         console.log('error on signUp ' + error)
         diplayError(error)
@@ -114,7 +129,6 @@
   }
 
   function onClose() {
-    show.value = false
   }
 
 </script>

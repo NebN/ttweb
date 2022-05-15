@@ -3,8 +3,14 @@
       <n-upload ref="uploadRef" type="file" @change="upload">
         <n-button class="upload"> {{ uploadText }}</n-button>
       </n-upload>
-      <n-button class="cpy" @click="copy" >{{ copyText }}</n-button>
-      <n-button class="download" @click="downlad" >{{ downloadText }}</n-button>
+      <div class="vertical-div" v-if="width < 580">
+        <n-button class="cpy" @click="copy" >{{ copyText }}</n-button>
+        <n-button class="download" @click="downlad" >{{ downloadText }}</n-button>
+      </div>
+      <div v-else class="horizontal-div">
+        <n-button class="cpy" @click="copy" >{{ copyText }}</n-button>
+        <n-button class="download" @click="downlad" >{{ downloadText }}</n-button>
+      </div>
     </div>
 </template>
 
@@ -54,8 +60,10 @@
     const file = data.file
 
     const reader = new FileReader(); 
-    reader.onprogress = e => emit('upload-text-progress', Math.round((e.loaded * 100) / e.total))
-    reader.onload = e => emit('upload-text', e.target.result, file.name)
+    //reader.onprogress = e => emit('upload-text-progress', Math.round((e.loaded * 100) / e.total))
+    reader.onload = e => {
+      emit('upload-text', e.target.result, file.name)
+    }
     reader.readAsText(file.file)
   
     nextTick(() => {
@@ -87,15 +95,10 @@ export default {
   padding: 0px;
   display:grid;
   grid-template-areas: 
-    "upload cpy download";
+    "upload copy-download-div";
   grid-template-rows: auto;
-  grid-template-columns: 2.5fr 1.25fr 1.25fr;
+  grid-template-columns: 2.5fr 2.5fr;
   gap: 0px;
-}
-
-
-.logout {
-  grid-area: logout;
 }
 
 .upload {
@@ -108,6 +111,21 @@ export default {
 
 .download {
   grid-area: download;
+}
+
+.vertical-div {
+  grid-area: copy-download-div;
+  display: grid;
+  grid-template-areas: 
+    "cpy"
+    "download"
+}
+
+.horizontal-div {
+  grid-area: copy-download-div;
+  display: grid;
+  grid-template-areas: 
+    "cpy download"
 }
 
 </style>

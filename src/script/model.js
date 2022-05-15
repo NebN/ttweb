@@ -3,7 +3,7 @@ import { stringIsEmpty } from "@/script/utils.js"
 
 export class TransformationChain {
 
-  constructor({ id=null, name, lines=[''], selected=false, dirty=false }) {
+  constructor({ id=null, name='Untitled Transformation', lines=[''], selected=false, dirty=false }) {
     this.id = id
     this.name = name
     this.lines = lines

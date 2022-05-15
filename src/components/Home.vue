@@ -1,7 +1,10 @@
 <template>
     <div class="main">
     
-    <SignInModal v-model:show="showSignIn" />
+    <SignInModal 
+    v-model:show="showSignIn"
+    @login-complete="onLoginComplete"
+    @login-started="onLoginStarted" />
 
     <TopBar id="top"
     :loggedIn="loggedIn"
@@ -10,6 +13,7 @@
 
     <SidePanel id="sidePanel"
     :savedTransformationChains="savedTransformationChains"
+    :loading="userLoading"
     :loggedIn="loggedIn"
     @sign-in="signIn"
     @selected="onSelected"
@@ -18,23 +22,29 @@
     @edit="onEdit"
     @add="onAdd"/>
 
-    <TrasformationChainComponent id="codeTextArea"
+    <TrasformationChainComponent 
+    id="codeTextArea"
     ref="codeTextRef" />
     
     <BigText
     id="inputTextArea" 
+    :readonly="false"
+    :loadingDescription="'Loading your file'"
     @input="onInput"
     ref="inputTextRef"
     :loading="inputLoading"
     :percentage="inputLoadingPercentage"
+    :maxChars="maxChars"
     placeholder="your text here" />
 
     <BigText id="outputTextArea" 
     ref="outputTextRef"
+    :readonly="true"
+    :loadingDescription="'Running transformations'"
     :loading="outputLoading"
     :percentage="outputLoadingPercentage"
-    readonly
     :bad="illegalTransformation"
+    :maxChars="maxChars"
     v-model="outputText"/>
 
     <BottomBar id="bottom"
@@ -51,12 +61,13 @@
 <script setup>
 import { useMessage, NAlert } from 'naive-ui'
 import { ref, watch, onMounted, computed, h, nextTick } from 'vue'
-import { getAuth, onAuthStateChanged, signOut } from "@firebase/auth"
+import { onAuthStateChanged, signOut } from "@firebase/auth"
 import { collection, doc, setDoc, deleteDoc, updateDoc, getDocs } from '@firebase/firestore'
 import { db } from '@/main.js'
+import { auth } from '@/main.js'
 import { serializeTransformation } from '@/script/transformations.js'
 import { TransformationChain } from '@/script/model.js'
-import { arrayEquals } from '@/script/utils.js'
+import { arrayEquals, stringIsEmpty } from '@/script/utils.js'
 import transformationWorker from '@/script/transformation-worker';
 import TopBar from './TopBar.vue'
 import BigText from './BigText.vue'
@@ -76,18 +87,21 @@ function beforeUnloadListener(event) {
   //window.addEventListener('beforeunload', beforeUnloadListener)
 //})
 
+const localStorageTsLabel = 'unsavedTransformations'
+
 const message = useMessage()
 const userRef = ref()
+const userLoading = ref(true)
 const loggedIn = computed(() => {
-  return Boolean(userRef.value)
+  return Boolean(userRef.value) || userLoading.value
 })
 const showSignIn = ref(false)
 const savedTransformationChains = ref([])
 const currentTransformation = ref()
 
 function logOut() {
-  signOut(getAuth()).then(() => {
-    // ok
+  signOut(auth).then(() => {
+    localStorage.removeItem(localStorageTsLabel)
   }).catch((error) => {
     console.log('error on logout ' + error)
   });
@@ -95,6 +109,14 @@ function logOut() {
 
 function signIn() {
   showSignIn.value = true
+}
+
+function onLoginStarted() {
+  userLoading.value = true
+}
+
+function onLoginComplete() {
+  userLoading.value = true
 }
 
 const renderMessage = (props) => {
@@ -114,28 +136,67 @@ const renderMessage = (props) => {
     });
 };
 
-onAuthStateChanged(getAuth(), (user) => {
+onAuthStateChanged(auth, (user) => {
   if (user) {
     userRef.value = user
-    setupUser(user)
   } else {
     userRef.value = null
   }
+  setupUser(user)
+  userLoading.value = false
 });
 
+function getLocallySavedTransformations() {
+  const saved = JSON.parse(localStorage.getItem(localStorageTsLabel))
+  if (saved) {
+    return saved.filter(t => t.name != 'Untitled Transformation' || t.lines.some(l => !stringIsEmpty(l)))
+  } else {
+    return []
+  }
+}
+
 async function setupUser(user) {
-  const transformations = await getDocs(collection(db, 'users', user.uid, 'transformations'))
+  const tsBeforeLogin = getLocallySavedTransformations()
   savedTransformationChains.value = []
-  transformations.forEach((t) => {
-    const data = t.data()
-    savedTransformationChains.value.push(
-      new TransformationChain({
-        id: t.id,
-        name: data.name,
-        lines: data.lines
+  if (user) {
+    const transformations = await getDocs(collection(db, 'users', user.uid, 'transformations'))
+    for (let i = 0; i < tsBeforeLogin.length; i++) {
+      const c = new TransformationChain(tsBeforeLogin[i])
+      if (!currentTransformation.value && c.selected) {
+        currentTransformation.value = c
+      }
+      savedTransformationChains.value.push(c)
+    }
+    transformations.forEach((t) => {
+      const data = t.data()
+      savedTransformationChains.value.push(
+        new TransformationChain({
+          id: t.id,
+          name: data.name,
+          lines: data.lines
+        })
+      )
+    })
+  } else {
+    if (tsBeforeLogin && tsBeforeLogin.length > 0) {
+      for (let i = 0; i < tsBeforeLogin.length; i++) {
+        const c = new TransformationChain(tsBeforeLogin[i])
+        if (!currentTransformation.value && c.selected) {
+          currentTransformation.value = c
+        }
+        savedTransformationChains.value.push(c)
+      }
+      if (!currentTransformation.value) {
+        currentTransformation.value = savedTransformationChains.value[0]
+      }
+    } else {
+      const c = new TransformationChain({ 
+        dirty: true
       })
-    )
-  })
+    savedTransformationChains.value.push(c)
+    currentTransformation.value = c
+    }
+  }
 }
 
 const inputTextRef = ref()
@@ -146,6 +207,7 @@ const outputLoading = ref(false)
 const outputLoadingPercentage = ref(0)
 const inputText = ref("")
 const outputText = ref("")
+const maxChars = ref(1000000)
 
 const codeTextRef = ref()
 const illegalTransformation = ref(false)
@@ -189,6 +251,13 @@ watch(currentTransformation, async (newT, oldT) => {
   newT.selected = true
 })
 
+watch(savedTransformationChains, async (newT, oldT) => {
+  if (!loggedIn.value) {
+    localStorage.setItem(localStorageTsLabel, JSON.stringify(newT))
+  }
+}, { deep: true })
+
+
 onMounted(() => {
   transformationWorker.worker.onmessage = e => {
     outputTextRef.value.setText(e.data)
@@ -197,7 +266,7 @@ onMounted(() => {
 })
 
 function executeCurrentTransformationChain() {
-  if (!codeTextRef.value || !inputTextRef.value || !outputTextRef.value) {
+  if (!codeTextRef.value || !inputTextRef.value || !outputTextRef.value || stringIsEmpty(inputTextRef.value.getText())) {
     return
   }
 
@@ -215,6 +284,17 @@ function executeCurrentTransformationChain() {
 }
 
 function uploadText(text, filename) {
+  if (text.length > maxChars.value) {
+    const localeString = maxChars.value.toLocaleString(undefined, { minimumFractionDigits: 0 })
+    message.info('The file you uploaded exceedes ' + localeString + 
+    ' characters.\nOnly the first ' + localeString +
+    ' characters will be displayed', {
+      render: renderMessage,
+      duration: 100000,
+      closable: true
+    })
+  }
+
   inputTextRef.value.setText(text)
   inputLoading.value = false
   inputLoadingPercentage.value = 0
@@ -257,48 +337,47 @@ function downloadOutput() {
   }
 }
 
-// https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
-function cyrb53(str, seed = 0) {
-  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-  for (let i = 0, ch; i < str.length; i++) {
-      ch = str.charCodeAt(i);
-      h1 = Math.imul(h1 ^ ch, 2654435761);
-      h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
-  return 4294967296 * (2097151 & h2) + (h1>>>0);
-};
-
 function onSelected(t) {
+  console.log('selected', t)
   currentTransformation.value = t
 }
 
 async function onSave(t) {
-  const lines = codeTextRef.value.getLines()
-  if (t.id != null) {
-    const tDoc = doc(db, 'users', userRef.value.uid, 'transformations', t.id)
-    await setDoc(tDoc, {
-      name: t.name,
-      lines: lines
-    })
+  if (!loggedIn.value) {
+    showSignIn.value = true
   } else {
-    const tColl = collection(db, 'users', userRef.value.uid, 'transformations')
-    const newTRef = doc(tColl)
-    await setDoc(newTRef, {
-      name: t.name,
-      lines: lines
-    })
-    t.id = newTRef.id
-  }
+    const lines = codeTextRef.value.getLines()
+    if (t.id != null) {
+      const tDoc = doc(db, 'users', userRef.value.uid, 'transformations', t.id)
+      await setDoc(tDoc, {
+        name: t.name,
+        lines: lines
+      })
+    } else {
+      const tColl = collection(db, 'users', userRef.value.uid, 'transformations')
+      const newTRef = doc(tColl)
+      await setDoc(newTRef, {
+        name: t.name,
+        lines: lines
+      })
 
-  t.dirty = false
-  t.linesWhenLastSaved = t.lines
-  message.success(t.name + ' saved!', {
-      render: renderMessage,
-      duration: 2500,
-      closable: true
-  })
+      const localStorageTs = getLocallySavedTransformations()
+      const foundTs = localStorageTs
+        .find(savedT => savedT.id == t.id && savedT.name == t.name && savedT.lines == t.lines && savedT.selected == t.selected)
+      const filtered = localStorageTs.filter(ts => ts != foundTs)
+      localStorage.setItem(filtered, localStorageTsLabel)
+
+      t.id = newTRef.id
+    }
+
+    t.dirty = false
+    t.linesWhenLastSaved = t.lines
+    message.success(t.name + ' saved!', {
+        render: renderMessage,
+        duration: 2500,
+        closable: true
+    })
+  }
 }
 
 async function onDelete(t) {

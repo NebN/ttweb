@@ -6,16 +6,26 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy",
+    "test": "jest"
   },
   "dependencies": {
     "@vue/cli": "^5.0.4",
+    "@vue/cli-plugin-babel": "^5.0.4",
     "@vue/cli-service": "^5.0.4",
     "core-js": "^3.6.5",
     "firebase": "^9.8.0",
     "firebase-tools": "^10.8.0",
     "vue": "^3.2.33",
     "vue-window-size": "^1.1.2"
+  },
+  "jest": {
+    "roots": [
+      "."
+    ],
+    "modulePaths": [
+      "src/script"
+    ]
   },
   "eslintConfig": {
     "root": true,
@@ -38,6 +48,7 @@
   ],
   "devDependencies": {
     "@vicons/fluent": "^0.12.0",
+    "jest": "^28.1.0",
     "naive-ui": "^2.28.2",
     "vfonts": "^0.0.3"
   }

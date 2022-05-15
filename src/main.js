@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { getAuth } from 'firebase/auth'
 import App from './App.vue'
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from "firebase/firestore"
@@ -21,6 +22,7 @@ const firebaseConfig = {
 
 initializeApp(firebaseConfig)
 export const db = getFirestore()
+export const auth = getAuth()
 
 const app = createApp(App)
 app.use(naive)

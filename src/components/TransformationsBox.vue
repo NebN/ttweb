@@ -47,15 +47,11 @@
     ['selected', 'save', 'delete', 'play', 'edit', 'add']
   )
 
-  const currentlySelected = ref(null)
   const showTransformationAdd = ref(false)
 
 
   function onSelected(t) {
-    if (!currentlySelected.value || currentlySelected.value.id != t.id) {
-      currentlySelected.value = t
-      emit('selected', t)
-    }
+    emit('selected', t)
   }
 
   function onEdit(t, newName) {

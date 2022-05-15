@@ -3,11 +3,11 @@ module.exports = {
     ? '/'
     : '/',
   
-  //configureWebpack: {
-  //  entry: {
-  //    worker: './src/script/transformation-worker'
-  //  },
-  //},
+  configureWebpack: {
+    entry: {
+      worker: './src/script/transformation-worker'
+    },
+  },
 
   chainWebpack: config => {
     config.performance
