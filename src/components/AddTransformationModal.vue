@@ -1,15 +1,16 @@
 <template>
   <n-modal >
-    <n-card title="Edit Transformation" >
+    <n-card title="New Transformation" >
         <n-form-item label="Name">
           <n-input type="text" 
-          :maxlength="100"
-          v-model:value="tStore.selectedTab.name" 
+          v-model:value="name" 
+          maxlength="100"
+          placeholder="Your transformation's name" 
           @keydown.enter.prevent="onConfirm" />
         </n-form-item>
         <n-space justify="space-around" >
-          <n-button strong secondary type="primary" @click="onConfirm">OK</n-button>
-          <!--n-button strong secondary type="error" @click="tStore.showEdit = false">Cancel</n-button-->
+          <n-button strong secondary type="primary" @click="onConfirm">Confirm</n-button>
+          <n-button strong secondary type="error" @click="tStore.showAdd = false">Cancel</n-button>
           <n-alert v-if="errorMessage"
           title="Error" 
           type="error"> {{ errorMessage }} </n-alert>
@@ -23,11 +24,13 @@
   import { useTStore } from '@/script/stores/transformationStore'
 
   const tStore = useTStore()
+  const name = ref('')
   const errorMessage = ref('')
 
   function onConfirm() {
-    tStore.showEdit = false
-    tStore.save()
+    tStore.newTab(name.value)
+    tStore.showAdd = false
+    name.value = ''
   }
 
   function diplayError(error) {

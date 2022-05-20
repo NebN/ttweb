@@ -1,16 +1,12 @@
 <template>
-    <EditTransformationModal 
-    @confirm="onConfirm"
-    @cancel="onCancel"
-    v-model:show="showTransformationAdd"
-    :name="''" />
+  <n-scrollbar style="max-height: (width-300)px;">
     <div id="transformations">
       <SavedTransformationComponent
-      v-for="t in savedTransformationChains" 
-      :key="t.name" 
+      v-for="t in tabs" 
+      :key="t.id" 
       :name="t.name"
       :selected="t.selected"
-      :dirty="t.dirty"
+      :dirty="t.isDirty()"
       @selected="onSelected(t)"
       @delete="onDelete(t)"
       @save="onSave(t)"
@@ -20,69 +16,32 @@
     </div>
     <n-card :bordered="false" >
       <n-space justify="space-around" size="small">
-        <n-button @click="onAdd" style="font-size: 28px">
+        <n-button @click="tStore.showAdd = true" style="font-size: 28px">
           <n-icon>
             <AddCircle24Regular />
           </n-icon>
         </n-button>
        </n-space>
     </n-card>
+  </n-scrollbar>
 </template>
 
 <script setup>
   import { ref } from "vue"
+  import { storeToRefs } from "pinia"
+  import { useWindowSize } from 'vue-window-size'
+  import { useTStore } from "@/script/stores/transformationStore.js"
   import SavedTransformationComponent from "./SavedTransformationComponent"
   import { AddCircle24Regular } from "@vicons/fluent"
-  import { TransformationChain } from "@/script/model"
-  import EditTransformationModal from "./EditTransformationModal"
 
-  defineProps({
-    savedTransformationChains: {
-      type: Array,
-      default: []
-    }
-  })
-
-  const emit = defineEmits(
-    ['selected', 'save', 'delete', 'play', 'edit', 'add']
-  )
-
-  const showTransformationAdd = ref(false)
-
+  const tStore = useTStore()
+  const { tabs } = storeToRefs(tStore)
+  const { width } = useWindowSize()
 
   function onSelected(t) {
-    emit('selected', t)
+    tStore.selectTab(t)
   }
 
-  function onEdit(t, newName) {
-    emit('edit', t, newName)
-  }
-
-  function onDelete(t) {
-    emit('delete', t)
-  }
-  
-  async function onSave(t) {
-    emit('save', t)
-  }
-
-  function onPlay(t) {
-    emit('play', t)
-  }
-
-  function onAdd() {
-    showTransformationAdd.value = true
-  }
-
-  function onCancel() {
-    showTransformationAdd.value = false
-  }
-
-  function onConfirm(n) {
-    showTransformationAdd.value = false
-    emit('add', n)
-  }
-    
 </script >
 
 <style scoped>

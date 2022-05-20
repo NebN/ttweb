@@ -97,7 +97,7 @@ export default {
   grid-template-areas: 
     "upload copy-download-div";
   grid-template-rows: auto;
-  grid-template-columns: 2.5fr 2.5fr;
+  grid-template-columns: 1fr 1fr;
   gap: 0px;
 }
 

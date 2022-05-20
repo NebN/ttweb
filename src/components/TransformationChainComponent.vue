@@ -1,7 +1,7 @@
 <template>
   <div id="container">
     <LineOfcodeComponent
-    v-for="(line, index) in lines" :key="line.id" :id="line.id"
+    v-for="(line, index) in lines" :key="line.id"
     :ref="el => { divs[index] = el }"
     :lineOfCode="lines[index]"
     @keydown.enter="onEnter(line, index)"
@@ -17,44 +17,20 @@
   import { ref, onBeforeUpdate, nextTick, watch } from 'vue'
   import LineOfcodeComponent from './LineOfCodeComponent'
   import { LineOfCodeModel } from '@/script/model.js'
-  import { arrayEquals } from '@/script/utils.js'
+  import { useTStore } from '@/script/stores/transformationStore.js'
 
+  const tStore = useTStore()
 
-  let lastId = 0
-
-  function newLine(code) {
-    return new LineOfCodeModel(
-      lastId++,
-      code
-    )
-  }
-
-  const lines = ref([newLine('')])
-  const divs = ref([])
-
-  // TODO caching
-  function getTransformationChain() {
-    const usableLines = lines.value.map(l => l.getTransformation()).filter(t => t != null)
-    if (usableLines.length == 0) {
-      return null
-    } else {
-      return usableLines.reduce((a, b) => a.chain(b))
+  tStore.$onAction(({ name, after }) => {
+    if (name === 'selectTab') {
+      after(() => {
+        lines.value = tStore.selectedTab.lines
+      })
     }
-  }
+  })
 
-  function setLines(transformation) {
-    lines.value = transformation.lines.map((line) => {
-      return newLine(line)
-    })
-  }
-
-  function getLines() {
-    return lines.value.map((l) => {
-      return l.getCode()
-    })
-  }
-
-  defineExpose({ getTransformationChain: getTransformationChain, setLines: setLines, getLines: getLines })
+  const lines = ref([new LineOfCodeModel('')])
+  const divs = ref([])
 
   onBeforeUpdate(() => {
     divs.value = []
@@ -78,7 +54,7 @@
         }
       } 
 
-    lines.value.push(newLine('')) // otherwise just add a new one (that will auto-focus)
+    lines.value.push(new LineOfCodeModel('')) // otherwise just add a new one (that will auto-focus)
   }
 
   function onDelete(line, index, event) {

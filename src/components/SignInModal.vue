@@ -1,19 +1,19 @@
 <template>
-  <n-modal :on-after-leave="onClose" >
+  <n-modal >
     <n-card title="Sign In">
       <n-form 
       ref="formRef">
-        <n-form-item label="Email">
+        <!--n-form-item label="Email">
           <n-input type="text" v-model="email" placeholder="Email" />
         </n-form-item>
         <n-form-item label="Password">
           <n-input type="password" v-model="password" placeholder="Password" />
-        </n-form-item>
+        </n-form-item-->
         <n-space vertical>
-          <n-button strong secondary type="primary" v-on:click="loginEmail">Login</n-button>
-          <n-button strong primary color="#B22222" v-on:click="loginGoogle">Login with Google</n-button>
-        <!--n-button v-on:click="loginGitHub()">Login with GitHub</n-button-->
-          <n-button strong secondary v-on:click="signUp">Sign Up</n-button>
+          <!--n-button strong secondary type="primary" v-on:click="userStore.signInEmail()">Sign in</n-button-->
+          <n-button strong primary color="#B22222" v-on:click="userStore.signInGoogle()">Sign in with Google</n-button>
+          <!--n-button v-on:click="userStore.signInGitHub()">Sign in with GitHub</n-button-->
+          <!--n-button strong secondary v-on:click="userStore.signUp(email, password)">Sign Up</n-button-->
             <n-alert v-if="errorMessage"
             title="Error" 
             type="error"> {{ errorMessage }} </n-alert>
@@ -25,87 +25,14 @@
 
 <script setup>
   import { ref } from 'vue'
-  import { auth } from '@/main.js'
-  import {
-  signInWithEmailAndPassword, 
-  getRedirectResult, 
-  GoogleAuthProvider, 
-  GithubAuthProvider,
-  signInWithRedirect, 
-  createUserWithEmailAndPassword} from 'firebase/auth'
-
-  const emit = defineEmits(
-    ['login-started', 'login-complete']
-  )
+  import { useUserStore } from '@/script/stores/userStore'
 
   const password = ref("")
   const email = ref("")
   const errorMessage = ref("")
   const show = ref(true)
 
-  const bodyStyle = ref({
-    width: "400px"
-  })
-
-  function login(callback) {
-    emit('login-started')
-    callback().then(() =>{
-      emit('login-complete')
-    })
-  }
-
-  function loginEmail() {
-    login(mail)
-  }
-
-  function loginGoogle() {
-    login(google)
-  }
-
-  function loginGitHub() {
-    login(gitHub)
-  }
-
-  async function mail() {
-    errorMessage.value = null
-    signInWithEmailAndPassword(auth, email.value, password.value)
-      .then((userCredential) => {
-
-      }).catch((error) => {
-        console.log('error on login ' + error)
-        diplayError(error)
-      });
-  }
-
-  async function google() {
-    thirdParty(new GoogleAuthProvider())
-  }
-
-  async function gitHub() {
-    thirdParty(new GithubAuthProvider())
-  }
-
-  async function thirdParty(provider) {
-    errorMessage.value = null
-    await signInWithRedirect(auth, provider)
-    getRedirectResult(auth).then((result) => {
-      // OK
-    }).catch((error) => {
-        console.log('error on getRedirectResult ' + error)
-        diplayError(error)
-    })
-  }
-
-  function signUp() {
-    errorMessage.value = null
-    createUserWithEmailAndPassword(auth, email.value, password.value)
-      .then((userCredential) => {
-        // OK
-      }).catch((error) => {
-        console.log('error on signUp ' + error)
-        diplayError(error)
-      });
-  }
+  const userStore = useUserStore()
 
   function diplayError(error) {
     switch(error.code) {
@@ -126,9 +53,6 @@
         console.log('uncaught error code ' + error)
         errorMessage.value = 'An unexpected error has occured, please try again.'
     }
-  }
-
-  function onClose() {
   }
 
 </script>

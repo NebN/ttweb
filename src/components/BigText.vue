@@ -7,14 +7,14 @@
       ref="textAreaRef"
       @input="onInput"
       :class="{
-          bad: bad,
           loading: loading
       }"
       wrap="off"
       autocomplete="off"
       autocorrect="off" 
       autocapitalize="off" 
-      spellcheck="false"/>
+      spellcheck="false"
+      :placeholder="placeholder"/>
       <template #description>
         {{ loadingDescription }}
       </template>
@@ -24,7 +24,7 @@
 
 <script setup>
   import { ref, nextTick } from 'vue'
-  import { NSpin } from 'naive-ui'
+  import { useTStore } from '@/script/stores/transformationStore'
 
   const props = defineProps({
     bad: false,
@@ -32,8 +32,11 @@
     percentage: 0,
     loadingDescription: '',
     readonly: false,
-    maxChars: 0
+    maxChars: 0,
+    placeholder: ''
   })
+
+  const tStore = useTStore()
 
   const textAreaValue = ref('')
   const textAreaRef = ref()
@@ -116,12 +119,6 @@
     font-size:12px;
     outline: none;
   }
-
-  textarea.bad {
-    border: solid #e63946;
-    font-size:20px;
-  }
-
   textarea.loading {
     opacity: 0.3;
   }

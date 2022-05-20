@@ -1,8 +1,9 @@
 import { createApp } from 'vue'
-import { getAuth } from 'firebase/auth'
 import App from './App.vue'
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from "firebase/firestore"
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import naive from "naive-ui";
 
 // General Font
@@ -22,10 +23,12 @@ const firebaseConfig = {
 
 initializeApp(firebaseConfig)
 export const db = getFirestore()
-export const auth = getAuth()
 
 const app = createApp(App)
 app.use(naive)
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
+app.use(pinia)
 
 app.directive('focus', {
   // When the bound element is mounted into the DOM
@@ -36,3 +39,4 @@ app.directive('focus', {
 })
 
 app.mount('#app')
+

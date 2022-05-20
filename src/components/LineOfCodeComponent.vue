@@ -47,6 +47,7 @@
   import { LineOfCodeModel } from '@/script/model.js'
   import { stringIsEmpty } from '@/script/utils.js'
   import { ref, reactive } from 'vue'
+import { useTStore } from '../script/stores/transformationStore';
 
   const props = defineProps({
     lineOfCode: LineOfCodeModel
@@ -55,6 +56,8 @@
   const emit = defineEmits(
     ['blur', 'input']
   )
+
+  const tStore = useTStore()
 
   const inputRef = ref(null)
   const editing = ref(false)
@@ -126,7 +129,7 @@ input {
   padding: 6px;
   margin: 0;
   overflow: hidden;
-  font-size: 16px;
+  font-size: 14px;
   flex-grow: 30;
   outline: none;
   border-width: 0;

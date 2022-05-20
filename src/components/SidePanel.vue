@@ -1,83 +1,79 @@
   <template>
-  <div id="panel">
-    <n-space justify="space-around" size="small">
-        <n-button @click="showDrawer=true">
-          <template #icon>
-            <Question20Filled />  
-          </template>
-        </n-button>
-        <!--n-switch v-model:value="active" size="medium">
-          <template #icon>
-            🤔
-          </template>
-        </n-switch-->
-    </n-space>
+    <n-space id="panel" vertical>
+      <n-space justify="space-evenly" size="small">
+      <n-button @click.stop="tStore.showDelete = true">
+        <template #icon>
+          <Delete16Filled />  
+        </template>
+      </n-button>
+      <n-button @click.stop="onEdit">
+        <template #icon>
+          <Edit16Filled />  
+        </template>
+      </n-button>
+      <n-button @click.stop="onSave" >
+        <template #icon depth="5">
+          <n-icon :component="Save16Filled" /> 
+        </template>
+      </n-button>
+      <!--n-button secondary type="primary" @click.stop="onPlay">
+        <template #icon>
+          <Play16Filled />  
+        </template>
+      </n-button-->
+      <n-button @click="showDrawer=true">
+        <template #icon>
+          <Question20Filled />  
+        </template>
+      </n-button>
+      </n-space>
     <Drawer v-model:show="showDrawer" />
       <n-spin :show="loading">
-        <div>
-          <n-divider title-placement="left">
-          Saved Transformations
-          </n-divider>
-          <div class="signInPrompt" v-if="!loggedIn"><a href="#" @click.prevent="emit('sign-in')">Sign In</a> to save your transformations!</div>
-          <TransformationsBox 
-          @selected="onSelected" 
-          @save="onSave"
-          @delete="onDelete"
-          @edit="onEdit"
-          @add="onAdd"
-          :savedTransformationChains="savedTransformationChains"
-          />
-      </div>
-    </n-spin>
-  </div>
+        <TransformationsBox />
+      </n-spin>
+    </n-space>
 </template>
 
 
 <script setup>
   import { ref } from 'vue'
+  import { storeToRefs } from 'pinia'
+  import { useMessage } from 'naive-ui'
+  import { useUserStore } from '@/script/stores/userStore.js'
+  import { useTStore } from '@/script/stores/transformationStore.js'
+  import { renderMessage } from '@/script/utils'
   import Drawer from './Drawer.vue'
   import TransformationsBox from './TransformationsBox.vue'
-  import { Question20Filled } from '@vicons/fluent'
+  import { Question20Filled, Edit16Filled, Play16Filled, Delete16Filled, Save16Filled } from '@vicons/fluent'
   import { RecordStop20Regular } from '@vicons/fluent'
 
-  const props = defineProps({
-    loggedIn: null,
-    loading: false,
-    savedTransformationChains: {
-      type: Array,
-      default: [],
-    }
-  })
-
+  const userStore = useUserStore()
+  const tStore = useTStore()
+  const { loading } = storeToRefs(userStore)
   const showDrawer = ref(false)
-  const active = ref(true)
 
-  const emit = defineEmits(['sign-in', 'selected', 'save', 'delete', 'edit', 'add'])
+  const message = useMessage()
 
-  function onSelected(t) {
-    emit('selected', t)
+  function onEdit() {
+    tStore.showEdit = true
   }
 
-  function onSave(t) {
-    emit('save', t)
+  function onSave() {
+    const callback = () => {
+      message.success('Saved ' + tStore.selectedTab.name + '!', {
+        render: renderMessage,
+        duration: 2500,
+        closable: true
+      })
+    }
+    tStore.save(callback)
   }
 
-  function onDelete(t) {
-    emit('delete', t)
-  }
-
-  function onEdit(t, newName) {
-    emit('edit', t, newName)
-  }
-
-  function onAdd(t) {
-    emit('add', t)
+  function onDelete() {
+    tStore.delete()
   }
 
 </script>
 
 <style scoped>
-.signInPrompt {
-  text-align: center;
-}
 </style>

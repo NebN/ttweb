@@ -1,6 +1,5 @@
 <template>
-  <n-config-provider 
-  :theme-overrides="{ common: { fontWeightStrong: '600' } }" >
+  <n-config-provider>
     <n-notification-provider>
       <n-message-provider>
 
@@ -11,27 +10,17 @@
   </n-config-provider>
 </template>
 
-<script>
-import { NConfigProvider, NMessageProvider, NNotificationProvider } from 'naive-ui';
-import { darkTheme } from 'naive-ui'
+<script setup>
+import { onAuthStateChanged, getAuth } from 'firebase/auth'
+import { useUserStore } from '@/script/stores/userStore.js'
 import Home from './components/Home.vue';
 
-export default {
-  name: 'App',
-  
-  components: {
-    NConfigProvider,
-    NMessageProvider,
-    NNotificationProvider,
-    Home
-  },
+const userStore = useUserStore()
+const auth = getAuth()
 
-  setup() {
+onAuthStateChanged(auth, (user) => {
+  userStore.setUser(user)
+});
 
-    return {
-      darkTheme
-    }
-  }
-}
 </script>
 

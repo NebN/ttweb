@@ -1,3 +1,4 @@
+import { stringIsEmpty } from '@/script/utils.js'
 /**
  * Class used to avoid having to transform the input
  * from lines to string and viceversa continuously if not needed.
@@ -62,9 +63,6 @@ class Flag {
 class TextTransformation {
   flags = []
 
-  // does not work when deployed to firebase, 'name' becomes something like 'x', 'w' or '_'
-  //name = this.constructor.name
-
   apply(text) {
     return this._f(text)
   }
@@ -77,13 +75,17 @@ class TextTransformation {
     }
   }
 
-    equals(that) {
-      return that && this.toString() === that.toString()
-    }
+  isError() {
+    return false
+  }
 
-    toString() {
-      throw new Error('toString not implemented')
-    }
+  equals(that) {
+    return that && this.toString() === that.toString()
+  }
+
+  toString() {
+    throw new Error('toString not implemented')
+  }
 }
 
 class InvalidTransformation extends TextTransformation {
@@ -106,8 +108,28 @@ class InvalidTransformation extends TextTransformation {
     }
   }
 
+  isError() {
+    return true
+  }
+
   toString() {
     return 'InvalidTransformation ' + this.error
+  }
+}
+
+class EmptyTransformation extends TextTransformation {
+  name = 'EmptyTransformation'
+
+  constructor() {
+    super()
+  }
+
+  apply(text) {
+    return text
+  }
+
+  toString() {
+    return 'Nothing'
   }
 }
 
@@ -135,6 +157,10 @@ class TextTransformationChain extends TextTransformation {
       }
       return res
     }
+  }
+
+  isError() {
+    return this._textTransformations.some(t => t.isError())
   }
 
   toString() {
@@ -259,13 +285,9 @@ export const transformations = [
   }
 ]
 
-function stringIsEmpty(string) {
-  return (string == null || string.length == 0 || string.trim().length == 0)
-}
-
 export function parseTransformation(code) {
   if (stringIsEmpty(code)) {
-    return null
+    return new EmptyTransformation()
   }
 
   try {
@@ -303,6 +325,8 @@ export function serializeTransformation(transformation) {
 
 function deserializeParsed(parsed) {
   switch(parsed.name) {
+    case 'EmptyTransformation':
+      return new EmptyTransformation()
     case 'InvalidTransformation':
       return new InvalidTransformation(parsed.error)
     case 'Grep':
