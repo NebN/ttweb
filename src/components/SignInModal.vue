@@ -12,7 +12,7 @@
         <n-space vertical>
           <!--n-button strong secondary type="primary" v-on:click="userStore.signInEmail()">Sign in</n-button-->
           <n-button strong primary color="#B22222" v-on:click="userStore.signInGoogle()">Sign in with Google</n-button>
-          <!--n-button v-on:click="userStore.signInGitHub()">Sign in with GitHub</n-button-->
+          <n-button v-on:click="userStore.signInGitHub()">Sign in with GitHub</n-button>
           <!--n-button strong secondary v-on:click="userStore.signUp(email, password)">Sign Up</n-button-->
             <n-alert v-if="errorMessage"
             title="Error" 

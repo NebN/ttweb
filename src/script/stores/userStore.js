@@ -8,8 +8,10 @@ import { signOut,
   signInWithRedirect, 
   createUserWithEmailAndPassword } from "firebase/auth"
 import { db } from "@/main.js"
+import { objectEquals } from "@/script/utils.js"
 import { getDocs, collection } from "firebase/firestore"
 import { useTStore } from "./transformationStore"
+import { isNoUnitNumericStyleProp } from "@vue/shared"
 
 
 export const useUserStore = defineStore('user', {
@@ -38,9 +40,11 @@ export const useUserStore = defineStore('user', {
 
   actions: {
     async setUser(user) {
+      if (!objectEquals(this.user, user, (a, b) => a.uid == b.uid)) {
+        const tStore = useTStore()
+        await tStore.setUserTabs(user)
+      }
       this.user = user
-      const tStore = useTStore()
-      await tStore.setUserTabs(user)
       this.loading = false
     },
     signOut() {

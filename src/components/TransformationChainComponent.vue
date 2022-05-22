@@ -4,6 +4,7 @@
     v-for="(line, index) in lines" :key="line.id"
     :ref="el => { divs[index] = el }"
     :lineOfCode="lines[index]"
+    @keydown="onInput"
     @keydown.enter="onEnter(line, index)"
     @keydown.delete="onDelete(line, index, $event)" 
     @blur="onFocusLost(index)"
@@ -14,7 +15,8 @@
 
 
 <script setup>
-  import { ref, onBeforeUpdate, nextTick, watch } from 'vue'
+  import { ref, onBeforeUpdate, nextTick } from 'vue'
+  import { storeToRefs } from 'pinia'
   import LineOfcodeComponent from './LineOfCodeComponent'
   import { LineOfCodeModel } from '@/script/model.js'
   import { useTStore } from '@/script/stores/transformationStore.js'
@@ -29,8 +31,18 @@
     }
   })
 
-  const lines = ref([new LineOfCodeModel('')])
+  const lines = ref(tStore.selectedTab.lines)
   const divs = ref([])
+  const show = ref(true)
+
+  function onInput() {
+    infoContentL1.value = 'nice jok lul xd'
+    show.value = false
+  }
+  const infoTitle = ref('')
+  const infoContentL1 = ref('Start typing to get suggestions and explanations')
+  const infoContentL2 = ref('example:')
+  const infoContentL3 = ref('grep "error"')
 
   onBeforeUpdate(() => {
     divs.value = []
@@ -99,5 +111,12 @@
 </script>
 
 <style scoped>
+
+.info-card {
+  margin-bottom: 4px;
+  --n-font-size: 16px !important;
+  white-space: pre-line;
+  min-height: 102px;
+}
 
 </style>

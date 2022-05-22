@@ -1,7 +1,7 @@
 let currentWorker;
 
 onmessage = e => {
-  if (currentWorker) {
+  if (currentWorker != null) {
     currentWorker.terminate()
   }
   currentWorker = new Worker(new URL('./transformationWorker.js', import.meta.url));

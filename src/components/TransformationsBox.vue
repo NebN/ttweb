@@ -1,6 +1,5 @@
 <template>
-  <n-scrollbar style="max-height: (width-300)px;">
-    <div id="transformations">
+    <n-scrollbar :style="`max-height: ${height}px`">
       <SavedTransformationComponent
       v-for="t in tabs" 
       :key="t.id" 
@@ -13,7 +12,6 @@
       @edit="onEdit(t, $event)"
       @play="onPlay(t)"
       />
-    </div>
     <n-card :bordered="false" >
       <n-space justify="space-around" size="small">
         <n-button @click="tStore.showAdd = true" style="font-size: 28px">
@@ -23,11 +21,10 @@
         </n-button>
        </n-space>
     </n-card>
-  </n-scrollbar>
+    </n-scrollbar>
 </template>
 
 <script setup>
-  import { ref } from "vue"
   import { storeToRefs } from "pinia"
   import { useWindowSize } from 'vue-window-size'
   import { useTStore } from "@/script/stores/transformationStore.js"
@@ -36,13 +33,17 @@
 
   const tStore = useTStore()
   const { tabs } = storeToRefs(tStore)
-  const { width } = useWindowSize()
+
+  const props = defineProps({
+    height: 0
+  })
 
   function onSelected(t) {
     tStore.selectTab(t)
   }
 
-</script >
+</script>
 
 <style scoped>
+    
 </style>

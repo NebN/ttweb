@@ -34,7 +34,11 @@ function cyrb53(str, seed = 0) {
   h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
   h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
   return 4294967296 * (2097151 & h2) + (h1>>>0);
-};
+}
+
+export function objectEquals(a, b, equalityFunction = (o1, o2) => o1 === o2) {
+  return (a == null) == (b == null) && (a == null || equalityFunction(a, b))
+}
 
 export const renderMessage = (props) => {
   const { type } = props;
@@ -52,3 +56,19 @@ export const renderMessage = (props) => {
       default: () => null
   });
 };
+
+export function readFile(file, finishedCallback, progressCallback=null) {
+  const reader = new FileReader();
+
+  if (progressCallback != null) {
+    reader.onprogress = e => {
+      progressCallback(e.loaded / e.total)
+    }
+  }
+  
+  reader.onload = e => {
+    finishedCallback(e.target.result)
+  }
+
+  reader.readAsText(file)
+}

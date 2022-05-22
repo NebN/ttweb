@@ -1,42 +1,68 @@
   <template>
-    <n-space id="panel" vertical>
-      <n-space justify="space-evenly" size="small">
-      <n-button @click.stop="tStore.showDelete = true">
-        <template #icon>
-          <Delete16Filled />  
-        </template>
-      </n-button>
-      <n-button @click.stop="onEdit">
-        <template #icon>
-          <Edit16Filled />  
-        </template>
-      </n-button>
-      <n-button @click.stop="onSave" >
-        <template #icon depth="5">
-          <n-icon :component="Save16Filled" /> 
-        </template>
-      </n-button>
-      <!--n-button secondary type="primary" @click.stop="onPlay">
-        <template #icon>
-          <Play16Filled />  
-        </template>
-      </n-button-->
-      <n-button @click="showDrawer=true">
-        <template #icon>
-          <Question20Filled />  
-        </template>
-      </n-button>
+    <n-space id="panel" vertical size="large">
+      <div ref="notBox">
+        <n-radio-group v-model:value="tStore.selectedMode" size="small" >
+          <n-radio-button
+          v-for="mode in tStore.modes"
+          :key="mode.value"
+          :value="mode.value"
+          :label="mode.label"
+          />
+        </n-radio-group>
+        <n-space justify="space-evenly" size="small">
+          <n-tooltip :delay="300">
+            <template #trigger>
+              <n-button @click.stop="tStore.showDelete = true">
+                <template #icon><Delete16Filled /></template>
+              </n-button>
+            </template>
+          Delete transformation
+        </n-tooltip>
+        <n-tooltip :delay="300">
+          <template #trigger>
+            <n-button @click.stop="onEdit">
+              <template #icon><Edit16Filled /></template>
+            </n-button>
+          </template>
+          Edit transformation name
+        </n-tooltip>
+        <n-tooltip :delay="300">
+          <template #trigger>
+            <n-button @click.stop="onSave" >
+            
+              <template #icon ><n-icon :depth="tStore.selectedTab.isDirty() ? 1 : 5" :component="Save16Filled" /></template>
+            </n-button>
+          </template>
+          Save transformation
+        </n-tooltip>
+        <n-tooltip v-if="tStore.selectedMode=='manual'" :delay="300">
+          <template #trigger>
+            <n-button secondary type="primary" @click.stop="onPlay">
+              <template #icon><Play16Filled/></template>
+            </n-button>
+          </template>
+          Execute transformation
+        </n-tooltip>
+        <n-tooltip :delay="300">
+          <template #trigger>
+            <n-button @click="showDrawer=true">
+              <template #icon><Question20Filled/></template>
+            </n-button>
+          </template>
+          Help
+        </n-tooltip>
       </n-space>
-    <Drawer v-model:show="showDrawer" />
+     <Drawer v-model:show="showDrawer" />
+    </div>
       <n-spin :show="loading">
-        <TransformationsBox />
+        <TransformationsBox :height=boxHeight />
       </n-spin>
     </n-space>
 </template>
 
 
 <script setup>
-  import { ref } from 'vue'
+  import { ref, computed, toRef } from 'vue'
   import { storeToRefs } from 'pinia'
   import { useMessage } from 'naive-ui'
   import { useUserStore } from '@/script/stores/userStore.js'
@@ -51,8 +77,22 @@
   const tStore = useTStore()
   const { loading } = storeToRefs(userStore)
   const showDrawer = ref(false)
-
   const message = useMessage()
+
+  const notBox = ref(null)
+
+  const emit = defineEmits(
+    ['play']
+  )
+
+  const props = defineProps({
+    sidePanelHeight: 0
+  })
+  
+  const boxHeight = computed(() => {
+    const notBoxHeight = notBox.value != null ? notBox.value.offsetHeight : 0
+    return props.sidePanelHeight - notBoxHeight
+  })
 
   function onEdit() {
     tStore.showEdit = true
@@ -73,7 +113,19 @@
     tStore.delete()
   }
 
+  function onPlay() {
+    emit('play')
+  }
+
 </script>
 
 <style scoped>
+.n-radio-group {
+  padding: 10px;
+  display: flex;
+}
+.n-radio-button {
+  margin-left: auto;
+  margin-right: auto;
+}
 </style>

@@ -4,7 +4,7 @@
         <n-form-item label="Name">
           <n-input type="text" 
           v-model:value="name" 
-          maxlength="100"
+          :maxlength="100"
           placeholder="Your transformation's name" 
           @keydown.enter.prevent="onConfirm" />
         </n-form-item>
@@ -22,13 +22,16 @@
 <script setup>
   import { ref } from 'vue'
   import { useTStore } from '@/script/stores/transformationStore'
+import { stringIsEmpty } from '../script/utils';
 
   const tStore = useTStore()
   const name = ref('')
   const errorMessage = ref('')
 
   function onConfirm() {
-    tStore.newTab(name.value)
+    if (!stringIsEmpty(name.value)) {
+      tStore.newTab(name.value)
+    }
     tStore.showAdd = false
     name.value = ''
   }

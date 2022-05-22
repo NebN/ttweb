@@ -41,16 +41,16 @@
   }
 
   .n-card:hover {
-    background-color: rgb(217, 252, 240);
+    background-color: #cceada;
   }
 
   .selected {
-    border: 3px solid #63E2B7FF !important;
+    border: 2px solid #63E2B7FF !important;
   }
 
   .dirty {
     font-weight: lighter;
     font-style: italic;
-    background-color: rgb(255, 254, 213);
+    background-color: rgb(255, 255, 255);
   }
 </style>

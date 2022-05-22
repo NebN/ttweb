@@ -1,6 +1,6 @@
 <template>
     <div class="bar">
-      <n-upload ref="uploadRef" type="file" @change="upload">
+      <n-upload :show-file-list="false" type="file" @change="upload">
         <n-button class="upload"> {{ uploadText }}</n-button>
       </n-upload>
       <div class="vertical-div" v-if="width < 580">
@@ -17,7 +17,8 @@
 
 <script setup>
   import { useWindowSize } from 'vue-window-size';
-  import { ref, nextTick, computed } from 'vue';
+  import { computed } from 'vue';
+  import { readFile } from '@/script/utils.js'
 
   defineProps({
     userRef: null,
@@ -54,23 +55,11 @@
     'copy-output', 'download-output', 'upload-text', 'upload-text-progress'
   ])
 
-  const uploadRef = ref()
-
   async function upload(data) {
-    const file = data.file
-
-    const reader = new FileReader(); 
-    //reader.onprogress = e => emit('upload-text-progress', Math.round((e.loaded * 100) / e.total))
-    reader.onload = e => {
-      emit('upload-text', e.target.result, file.name)
-    }
-    reader.readAsText(file.file)
-  
-    nextTick(() => {
-      // do not want to see the name of the file uploaded
-      // underneath the button as it messes up the layout
-      uploadRef.value.clear()
-    })
+    readFile(
+      data.file.file, 
+      content => emit('upload-text', content, data.file.name), 
+      progress => emit('upload-text-progress', progress)) 
   }
 
   function copy() {
@@ -82,13 +71,6 @@
   }
 </script>
 
-<script>
-export default {
-  setup() {
-
-  }
-}
-</script>
 
 <style scoped>
 .bar {
@@ -99,9 +81,29 @@ export default {
   grid-template-rows: auto;
   grid-template-columns: 1fr 1fr;
   gap: 0px;
+  justify-content: center;
 }
 
-.upload {
+.vertical-div {
+  grid-area: copy-download-div;
+  display: grid;
+  grid-template-areas: 
+    "cpy"
+    "download";
+    grid-template-columns: auto;
+    grid-template-rows: 1fr 1fr;
+}
+
+.horizontal-div {
+  grid-area: copy-download-div;
+  display: grid;
+  grid-template-areas: 
+    "cpy download";
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+}
+
+div.n-upload-trigger {
   grid-area: upload;
 }
 
@@ -113,19 +115,5 @@ export default {
   grid-area: download;
 }
 
-.vertical-div {
-  grid-area: copy-download-div;
-  display: grid;
-  grid-template-areas: 
-    "cpy"
-    "download"
-}
-
-.horizontal-div {
-  grid-area: copy-download-div;
-  display: grid;
-  grid-template-areas: 
-    "cpy download"
-}
 
 </style>

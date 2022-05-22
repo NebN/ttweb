@@ -27,7 +27,7 @@
 
   function onConfirm() {
     tStore.showEdit = false
-    tStore.save()
+    tStore.edit()
   }
 
   function diplayError(error) {

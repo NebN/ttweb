@@ -22,7 +22,7 @@
         @blur="onFocusLost"
         @focus="onFocusGained"
         @input="onInput"
-        @enter="blur()"
+        @enter.prevent="blur()"
       />
       <button v-for="flag in flags" :key="flag.label" 
       class="btn-flag"

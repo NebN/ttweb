@@ -13,6 +13,7 @@ import 'vfonts/FiraCode.css'
 
 const firebaseConfig = {
     apiKey: "AIzaSyAyIN83prtKvTaBLYasP3_-BWfDbamCFiw",
+    //authDomain: "xtxt.tools"
     authDomain: "ttweb-396d0.firebaseapp.com",
     projectId: "ttweb-396d0",
     storageBucket: "ttweb-396d0.appspot.com",

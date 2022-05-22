@@ -17,7 +17,7 @@
     "firebase": "^9.8.1",
     "firebase-tools": "^10.9.2",
     "pinia": "^2.0.14",
-    "pinia-plugin-persistedstate": "^1.5.2",
+    "pinia-plugin-persistedstate": "^1.6.0",
     "vue": "^3.2.33",
     "vue-window-size": "^1.1.2"
   },

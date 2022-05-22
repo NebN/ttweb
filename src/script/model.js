@@ -19,13 +19,6 @@ export class LineOfCodeModel {
     return LineOfCodeModel.lastId++;
   }
 
-  static jsonReplacer() {
-    return (k, v) => {
-      if (k === '_transformation') return undefined
-      else return v
-    }
-  }
-
   getCode() {
     return this._code
   }
@@ -56,12 +49,18 @@ export class TTab {
 
   static DEFAULT_NAME = 'Untitled Transformation'
 
-  constructor({ id=uuidv4(), name=TTab.DEFAULT_NAME, lines=[new LineOfCodeModel('')], selected=false }) {
+  constructor({ 
+    id=uuidv4(), 
+    name=TTab.DEFAULT_NAME, 
+    lines=[new LineOfCodeModel('')], 
+    selected=false, 
+    linesWhenLastSaved=lines.map(l => l._code) }) {
+
     this.id = id
     this.name = name
     this.lines = lines
     this.selected = selected
-    this.linesWhenLastSaved = this.lines.map(l => l._code)
+    this.linesWhenLastSaved = linesWhenLastSaved
   }
 
   isDirty() {
@@ -73,11 +72,11 @@ export class TTab {
   }
 
   static fromObject(parsed) {
-    const lines = parsed.lines.map(l => new LineOfCodeModel(l._code))
     return new TTab({
       id: parsed.id,
       name: parsed.name,
-      lines: lines,
+      lines: parsed.lines.map(l => new LineOfCodeModel(l._code)),
+      linesWhenLastSaved: parsed.linesWhenLastSaved,
       selected: parsed.selected,
       dirty: parsed.dirty,
     })

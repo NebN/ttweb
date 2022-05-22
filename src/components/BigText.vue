@@ -14,7 +14,8 @@
       autocorrect="off" 
       autocapitalize="off" 
       spellcheck="false"
-      :placeholder="placeholder"/>
+      :placeholder="tStore.selectedMode!=='file' ? placeholder : ''"
+      :disabled="tStore.selectedMode==='file'"/>
       <template #description>
         {{ loadingDescription }}
       </template>
@@ -121,6 +122,10 @@
   }
   textarea.loading {
     opacity: 0.3;
+  }
+
+  textarea {
+    min-width: 150px;
   }
 
 </style>

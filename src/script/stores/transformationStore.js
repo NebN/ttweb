@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import { db } from "@/main.js"
-import { getDocs, collection, setDoc, deleteDoc, doc } from "firebase/firestore"
+import { getDocs, collection, setDoc, deleteDoc, updateDoc, doc, writeBatch } from "firebase/firestore"
 import { useMessage } from 'naive-ui'
 import { TTab, LineOfCodeModel } from "@/script/model"
 import { useUserStore } from "@/script/stores/userStore"
@@ -13,12 +13,32 @@ export const useTStore = defineStore('transformations', {
       selected: true
     })
 
+    const modes = [
+      {
+        value: 'auto',
+        label: 'Auto Exec',
+        description: 'Automatically execute transformations whenever code or input changes'
+      },
+      {
+        value: 'manual',
+        label: 'Manual Exec',
+        description: 'Manually execute transformations with the play button'
+      },
+      {
+        value: 'file',
+        label: 'File Only',
+        description: 'Only execute transformations on uploaded files. Will not display any text.'
+      }
+    ]
+
     return {
       tMap: new Map([[t.id, t]]),
       selectedId: t.id,
       showEdit: false,
       showAdd: false,
-      showDelete: false
+      showDelete: false,
+      modes: modes,
+      selectedMode: 'auto'
     }
   },
 
@@ -28,7 +48,8 @@ export const useTStore = defineStore('transformations', {
         const tMapArray = Array.from(state.tMap.entries())
         return JSON.stringify({
           tMap: tMapArray,
-          selectedId: state.selectedId
+          selectedId: state.selectedId,
+          selectedMode: state.selectedMode
         })
       },
       deserialize: (string) => {
@@ -38,7 +59,8 @@ export const useTStore = defineStore('transformations', {
         }))
         return {
           tMap: tMap,
-          selectedId: parsed.selectedId
+          selectedId: parsed.selectedId,
+          selectedMode: parsed.selectedMode
         }
       }
     }
@@ -61,8 +83,10 @@ export const useTStore = defineStore('transformations', {
     },
     async setUserTabs(user) {
       const tabs = []
+      let currentTabsToKeep = []
 
       if (user) {
+        currentTabsToKeep = this.tabs.filter(t => !t.isDefault())
         const ts = await getDocs(collection(db, 'users', user.uid, 'transformations'))
         ts.forEach(t => {
           const data = t.data()
@@ -72,13 +96,25 @@ export const useTStore = defineStore('transformations', {
             lines: data.lines.map(l => new LineOfCodeModel(l))
           }))
         })
-      }
 
-      if (tabs.length > 0) {
-        const currentTabsToKeep = this.tabs.filter(t => !t.isDefault())
-        const merged = currentTabsToKeep.concat(tabs)
+        if (currentTabsToKeep.length > 0) {
+          const batch = writeBatch(db)
+          currentTabsToKeep.forEach(t => {
+            batch.set(doc(db, 'users', user.uid, 'transformations', t.id), {
+              name: t.name,
+              lines: t.lines.map(l => l.getCode())
+            })
+          })
+          await batch.commit()
+        }
+      }
+      
+      const merged = currentTabsToKeep.concat(tabs)
+
+      if (merged.length > 0) {
         this.$patch({
           tMap: new Map(merged.map(t => [t.id, t])),
+          selectedId: merged[0].id
         })
         this.selectTab(merged[0])
       } else {
@@ -107,13 +143,13 @@ export const useTStore = defineStore('transformations', {
     async save(callback) {
       const userStore = useUserStore()
       if (userStore.isLoggedIn) {
-        const selected = this.selectedTab
-        const tDoc = doc(db, 'users', userStore.user.uid, 'transformations',selected.id)
+        const selectedTab = this.selectedTab
+        const tDoc = doc(db, 'users', userStore.user.uid, 'transformations',selectedTab.id)
         await setDoc(tDoc, {
-          name: selected.name,
-          lines: selected.lines.map(l => l._code)
+          name: selectedTab.name,
+          lines: selectedTab.lines.map(l => l._code)
         }).then(() => {
-          selected.saved()
+          selectedTab.saved()
           if (callback) {
             callback()
           }
@@ -141,10 +177,12 @@ export const useTStore = defineStore('transformations', {
     async edit() {
       const selectedTab = this.selectedTab
       const userStore = useUserStore()
-      const tDoc = doc(db, 'users', userStore.user.uid, 'transformations', selectedTab.id)
-      await updateDoc(tDoc, {
-        name: selectedTab.name
-      })
+      if (userStore.isLoggedIn) {
+        const tDoc = doc(db, 'users', userStore.user.uid, 'transformations', selectedTab.id)
+        await updateDoc(tDoc, {
+          name: selectedTab.name
+        })
+      }
     }
   }
 })
