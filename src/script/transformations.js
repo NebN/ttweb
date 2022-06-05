@@ -68,14 +68,24 @@ class TextTransformation {
   }
 
   chain(transformation) {
-    if (transformation.error) {
+    if (transformation.isError()) {
       return transformation
+    } else if (transformation.isEmpty()) {
+      return this 
     } else {
       return new TextTransformationChain([this, transformation])
     }
   }
 
+  toString() {
+    throw new Error('toString not implemented')
+  }
+
   isError() {
+    return false
+  }
+
+  isEmpty() {
     return false
   }
 
@@ -83,15 +93,12 @@ class TextTransformation {
     return that && this.toString() === that.toString()
   }
 
-  toString() {
-    throw new Error('toString not implemented')
-  }
 }
 
 class InvalidTransformation extends TextTransformation {
   name = 'InvalidTransformation'
 
-  constructor(error) {
+  constructor({ error: error }) {
     super()
     this.error = error
   }
@@ -104,7 +111,7 @@ class InvalidTransformation extends TextTransformation {
     if (!transformation.error) {
       return this
     } else {
-      return new InvalidTransformation(this.error + '\n' + transformation.error)
+      return new InvalidTransformation({ error: this.error + '\n' + transformation.error })
     }
   }
 
@@ -122,6 +129,10 @@ class EmptyTransformation extends TextTransformation {
 
   constructor() {
     super()
+  }
+
+  isEmpty() {
+    return true
   }
 
   apply(text) {
@@ -142,7 +153,9 @@ class TextTransformationChain extends TextTransformation {
   }
 
   chain(transformation) {
-    this._textTransformations.push(transformation)
+    if (!transformation.isEmpty()) {
+      this._textTransformations.push(transformation)
+    }
     return this
   }
 
@@ -171,7 +184,7 @@ class TextTransformationChain extends TextTransformation {
 class Grep extends TextTransformation {
   name = 'Grep'
 
-  constructor(word) {
+  constructor({ word: word }) {
     super()
     this.word = word
     this._f = text => Text.fromLines(text.lines().filter(line => line.includes(this.word)))
@@ -186,7 +199,7 @@ class Replace extends TextTransformation {
   name = 'Replace'
 
 
-  constructor(expression, replacement) {
+  constructor({ expression: expression, replacement: replacement }) {
     super()
     this.expression = expression
     const expressionRegex = new RegExp(expression, 'g')
@@ -238,17 +251,33 @@ class Strip extends TextTransformation {
   }
 }
 
-  /**
-   * join
-   * split
-   * prepend/append
-   * groups?
-   * format
-   * keep
-   * remove
-   * cut
-   */
+class Join extends TextTransformation {
+  name = 'Join'
 
+  constructor({ joiner: joiner }) {
+    super()
+    this.joiner = joiner
+    this._f = text => Text.fromString(text.lines().join(this.joiner))
+  }
+
+  toString() {
+    return 'Join ' + this.joiner
+  }
+}
+
+class Split extends TextTransformation {
+  name = 'Split'
+
+  constructor({ splitter: splitter }) {
+    super()
+    this.splitter = splitter
+    this._f = text => Text.fromLines(text.string().split(this.splitter))
+  }
+
+  toString() {
+    return 'Split ' + this.splitter
+  }
+}
 
 export const transformations = [
   { 
@@ -256,7 +285,7 @@ export const transformations = [
       const regex = /^\s*grep\s+"(.*?)"\s*/
       const matches = code.match(regex)
       const word = matches[1]
-      return new Grep(word) 
+      return new Grep({ word: word }) 
     }
   },
   { 
@@ -265,22 +294,41 @@ export const transformations = [
       const matches = code.match(regex)
       const expression = matches[1]
       const replacement = matches[2]
-      return new Replace(expression, replacement) 
+      return new Replace({
+        expression: expression, 
+        replacement: replacement
+      }) 
     }
   },
   { 
-    keyword: 'sort', parse: code => {
+    keyword: 'sort', parse: () => {
       return new Sort() 
     }
   },
   { 
-    keyword: 'distinct', parse: code => {
+    keyword: 'distinct', parse: () => {
       return new Distinct() 
     }
   },
   { 
-    keyword: 'strip', parse: code => {
+    keyword: 'strip', parse: () => {
       return new Strip() 
+    }
+  },
+  { 
+    keyword: 'join', parse: code => {
+      const regex = /^\s*join\s+"(.*?)"\s*/
+      const matches = code.match(regex)
+      const joiner = matches[1]
+      return new Join({ joiner: joiner }) 
+    }
+  },
+  { 
+    keyword: 'split', parse: code => {
+      const regex = /^\s*split\s+"(.*?)"\s*/
+      const matches = code.match(regex)
+      const splitter = matches[1]
+      return new Split({ splitter: splitter }) 
     }
   }
 ]
@@ -298,11 +346,11 @@ export function parseTransformation(code) {
     if (t != null) {
       return t.parse(code)
     } else {
-      return new InvalidTransformation(keyword + ' is not a valid keyword')
+      return new InvalidTransformation({ error: keyword + ' is not a valid keyword' })
     }
   } catch (error) { // TODO custom error inside each transformation, with a better explanation of what is incorrect
     // console.log(error)
-    return new InvalidTransformation(code + ' is not a valid transformation\n' + error)
+    return new InvalidTransformation({ error: code + ' is not a valid transformation\n' + error })
   }
 }
 
@@ -328,17 +376,21 @@ function deserializeParsed(parsed) {
     case 'EmptyTransformation':
       return new EmptyTransformation()
     case 'InvalidTransformation':
-      return new InvalidTransformation(parsed.error)
+      return new InvalidTransformation(parsed)
     case 'Grep':
-      return new Grep(parsed.word)
+      return new Grep(parsed)
     case 'Replace':
-      return new Replace(parsed.expression, parsed.replacement)
+      return new Replace(parsed)
     case 'Sort':
       return new Sort()
     case 'Distinct':
       return new Distinct()
     case 'Strip':
       return new Strip()
+    case 'Join':
+      return new Join(parsed)
+    case 'Split':
+      return new Split(parsed)
     case 'TextTransformationChain':
       const ts = parsed._textTransformations.map(t => deserializeParsed(t))
       return new TextTransformationChain(ts)

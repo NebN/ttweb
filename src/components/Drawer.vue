@@ -25,7 +25,13 @@
                   <div>distinct</div>
                 </n-collapse-item>
                 <n-collapse-item title='strip' name='5'>
-                  <div> strip</div>
+                  <div>strip</div>
+                </n-collapse-item>
+                <n-collapse-item title='split' name='6'>
+                  <div>split "split_string"</div>
+                </n-collapse-item>
+                <n-collapse-item title='join' name='7'>
+                  <div>join "join_string"</div>
                 </n-collapse-item>
               </n-collapse>
             </n-collapse-item>
